@@ -12,7 +12,7 @@ knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$pat
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 ```
 
-```{r}
+```{r, results = FALSE, message = FALSE}
 colorblind_palette = c("#000000", "#E69F00", "#56B4E9", "#009E73",
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 library(tidyverse)
@@ -64,38 +64,45 @@ df = df[, colSums(is.na(df)) != nrow(df)]
 Let's pivot by events. 
 ```{r}
 df %>%
+    dplyr::mutate_at(names(df)[7:36], as.character) %>%
+    dplyr::mutate_at(names(df)[46:51], as.character) %>%
     tidyr::pivot_longer(
-        cols = c(event00_type, event01_type, event02_type, event03_type, event04_type,
+        cols = c(
+                 event00_type, event01_type, event02_type, event03_type, event04_type,
                  event05_type, event06_type, event07_type, event08_type, event09_type,
-                 event10_type, event11_type),
-        names_to = "event_number_y",
-        names_prefix = "event([0-9][0-9])_type",
-        values_to = "event_type"
-    ) %>%
-    tidyr::pivot_longer(
-        cols = c(event00_time, event01_time, event02_time, event03_time, event04_time,
+                 event10_type, event11_type,
+                 event00_time, event01_time, event02_time, event03_time, event04_time,
                  event05_time, event06_time, event07_time, event08_time, event09_time,
-                 event10_time, event11_time),
-        names_to = "event_number_t",
-        names_prefix = "event([0-9][0-9])_time",
-        values_to = "event_time"
-    ) %>%
-    tidyr::pivot_longer(
-        cols = c(event00_player, event01_player, event02_player, event03_player, event04_player,
+                 event10_time, event11_time,
+                 event00_player, event01_player, event02_player, event03_player, event04_player,
                  event05_player, event06_player, event07_player, event08_player, event09_player,
-                 event10_player, event11_player),
-        names_to = "event_number_p",
-        names_prefix = "event([0-9][0-9])_player",
-        values_to = "event_player") %>%
-    dplyr::mutate(event_number = event_number_y) %>%
-    dplyr::select(-c(event_number_y, event_number_t, event_number_p)) %>%
-    dplyr::distinct() %>%
-    tidyr::drop_na(any_of(event_player, event_time, event_type)) -> edf
-
+                 event10_player, event11_player 
+        ),
+        names_to = c("event_number", "event_info_category"),
+        names_pattern = "event([0-9][0-9])_(.*)",
+        values_to = "event_info"
+    ) %>%
+    dplyr::filter(if_all(c(event_number, event_info_category, event_info),
+                         complete.cases)) %>%
+    tidyr::pivot_wider(
+        names_from = event_info_category,
+        values_from = event_info,
+        names_prefix = "event_"
+    ) -> possessions
 ```
 
+Merge with game info
+```{r}
+games = readr::read_csv('../2021.12.27_import_testing/all_lakers_games.csv')
 
+dplyr::left_join(
+    possessions,
+    games,
+    by = c("game_id" = "game_id"),
+) -> cdf
 
+readr::write_csv(cdf, './all_possession_events.csv')
+```
 
 
 
