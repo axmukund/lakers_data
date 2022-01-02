@@ -1,0 +1,116 @@
+---
+title: "Parsing NBA Possession Events"
+author: "Adi Mukund"
+date: "12/28/2021"
+output: html_document
+---
+
+# Setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+```
+
+```{r}
+colorblind_palette = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+library(tidyverse)
+library(ggplot2)
+library(stringr)
+library(hrbrthemes)
+library(tidyverse)
+library(cowplot)
+library(deSolve)
+library(data.table)
+library(patchwork)
+library(comprehenr)
+library(tidyr)
+library(ggthemes)
+library(ggeasy)
+library(dplyr)
+library(viridis)
+library(gtable)
+library(corrr)
+library(ggsignif)
+library(ggforce)
+library(rlist)
+library(ggridges)
+library(ggHoriPlot)
+library(latex2exp)
+library(ggrepel)
+library(interp)
+library(ggpubr)
+library(scico)
+library(fitdistrplus)
+library(colorspace)
+library(biclust)
+library(heatmaply)
+library(webshot)
+library(dendextend)
+library(gplots)
+library(ComplexHeatmap)
+library(circlize)
+
+webshot::install_phantomjs()
+```
+
+First, let's load the data
+```{r}
+df = readr::read_csv('../2021.12.27_import_testing/all_lakers_possessions_20211228.csv')
+df = df[, colSums(is.na(df)) != nrow(df)]
+```
+
+Let's pivot by events. 
+```{r}
+df %>%
+    tidyr::pivot_longer(
+        cols = c(event00_type, event01_type, event02_type, event03_type, event04_type,
+                 event05_type, event06_type, event07_type, event08_type, event09_type,
+                 event10_type, event11_type),
+        names_to = "event_number_y",
+        names_prefix = "event([0-9][0-9])_type",
+        values_to = "event_type"
+    ) %>%
+    tidyr::pivot_longer(
+        cols = c(event00_time, event01_time, event02_time, event03_time, event04_time,
+                 event05_time, event06_time, event07_time, event08_time, event09_time,
+                 event10_time, event11_time),
+        names_to = "event_number_t",
+        names_prefix = "event([0-9][0-9])_time",
+        values_to = "event_time"
+    ) %>%
+    tidyr::pivot_longer(
+        cols = c(event00_player, event01_player, event02_player, event03_player, event04_player,
+                 event05_player, event06_player, event07_player, event08_player, event09_player,
+                 event10_player, event11_player),
+        names_to = "event_number_p",
+        names_prefix = "event([0-9][0-9])_player",
+        values_to = "event_player") %>%
+    dplyr::mutate(event_number = event_number_y) %>%
+    dplyr::select(-c(event_number_y, event_number_t, event_number_p)) %>%
+    dplyr::distinct() %>%
+    tidyr::drop_na(any_of(event_player, event_time, event_type)) -> edf
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
